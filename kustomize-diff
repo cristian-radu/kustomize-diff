@@ -1,0 +1,33 @@
+#!/bin/bash
+
+function print_usage() {
+  echo "Usage: kustomize-diff <KUSTOMIZE_URL_1> <KUSTOMIZE_URL_2>"
+  echo "https://github.com/hashicorp/go-getter#url-format"
+  exit 1
+}
+
+function is_command_in_path() {
+  if ! [ -x "$(command -v $1)" ]; then
+    echo "Error: $1 not found in PATH: $PATH"
+    exit 1
+  fi
+}
+
+if [ "$#" -ne 2 ] || [ $1 == "--help" ]; then
+  print_usage
+fi
+
+LEFT_URL=${1}
+RIGHT_URL=${2}
+
+LEFT_FILE=$(mktemp)
+RIGHT_FILE=$(mktemp)
+
+is_command_in_path kustomize
+kustomize build $LEFT_URL > $LEFT_FILE
+kustomize build $RIGHT_URL > $RIGHT_FILE
+
+is_command_in_path yq
+yq x $LEFT_FILE $RIGHT_FILE -d*
+
+rm $LEFT_FILE $RIGHT_FILE
